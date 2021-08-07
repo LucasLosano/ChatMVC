@@ -1,0 +1,90 @@
+@model ChatMVC.DTO.MessageDTO
+
+<style>
+    scroll-container {
+        display: block;
+        width: 100%;
+        height: 350px;
+        overflow-y: scroll;
+        flex-wrap: wrap;
+    }
+</style>
+
+
+
+<h1>Group Chat</h1>
+<scroll-container id="scroll" class="d-flex">
+    @foreach (var message in ViewBag.Messages)
+    {
+        @if(User.Identity.Name == message.User)
+        {
+            <div class="w-100">
+                <div class="alert alert-primary w-25">
+                    <p style="margin-bottom: 0;" >@message.MessageText</p>
+                    <p  style="font-size: xx-small;color:gray;margin-bottom: 0;">@message.SentAt.ToString("MM/dd/yyyy H:mm")</p>
+                </div>
+            </div>
+        }else
+        {
+            <div class="w-100">
+                <div class="ml-auto alert alert-success w-25">
+                    <p style="margin-bottom: 0;" >@message.MessageText</p>
+                    <p  style="font-size: xx-small;color:gray;margin-bottom: 0;">@message.SentAt.ToString("MM/dd/yyyy H:mm") - By:@message.User</p>
+                </div>
+            </div>
+        }
+        
+    }
+</scroll-container>
+
+<form class="form-horizontal" method="POST" asp-controller="Chat" asp-action="SendMessage">
+    <input type="hidden" asp-for="User" value="@User.Identity.Name">
+
+    <div class="d-flex">
+        <input class="form-control" type="text" asp-for="MessageText" placeholder="Type your message here ...">
+        <button class="btn btn-success">Send</button><br>
+    </div>
+    <span asp-validation-for="MessageText" class="text-danger"></span>
+</form>
+
+<script>
+    var scroll = document.getElementById("scroll");
+    scroll.scrollTop = scroll.scrollHeight;
+
+    
+    var temp = -1;
+    var sair = -1;
+
+    var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                temp = xhr.responseText;
+                sair = temp; 
+            }
+        }
+    var outro = new XMLHttpRequest();
+        outro.onreadystatechange = function() {
+            if (outro.readyState == XMLHttpRequest.DONE) {
+                sair = outro.responseText;
+            }
+        }
+    xhr.open('GET', 'https://localhost:5001/Chat/Messages', true);
+    xhr.send(null);
+
+    async function waitUntil() {
+    return await new Promise(resolve => {
+        const interval = setInterval(() => {
+        console.log(temp)
+        outro.open('GET', 'https://localhost:5001/Chat/Messages', true);
+                outro.send(null);
+        if (temp != sair) {
+            resolve('foo');
+            clearInterval(interval);
+            document.location.reload(true);
+        };
+        }, 500);
+    });
+    }
+
+    waitUntil();
+</script>
